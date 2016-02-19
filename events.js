@@ -1,30 +1,39 @@
-
-
 module.exports = (() => {
     "use strict";
-    let eventName;
 
-    let eventWithCallbacks = {
-        eventName: eventName,
-        callbacks: new Map()
-    };
+    let eventWithCallbacks = new Map();
 
     function setEventCallback(eventName, callback, scope) {
-        eventWithCallbacks.eventName = eventName;
-        eventWithCallbacks.callbacks.set(callback.toString(), callback)
+
+        if (eventWithCallbacks.has(eventName)) {
+            let callbacks = eventWithCallbacks.get(eventName);
+            callbacks.set(callback.toString(), callback);
+            eventWithCallbacks.set(eventName, callbacks);
+        }
+        else {
+            let callbacks = new Map();
+            callbacks.set(callback.toString(), callback);
+            eventWithCallbacks.set(eventName, callbacks);
+        }
 
         return callback;
     }
     function removeEventCallback(eventName, callback) {
+
+        let callbacks = eventWithCallbacks.get(eventName);
         if (callback === undefined) {
-            eventWithCallbacks.callbacks.clear();
+            callbacks.clear();
+            eventWithCallbacks.set(eventName, callbacks);
             return;
         }
-        eventWithCallbacks.callbacks.delete(callback.toString());
+
+        callbacks.delete(callback.toString());
+        eventWithCallbacks.set(eventName, callbacks);
     }
 
     function triggerEvent(eventName, parameters) {
-        for (let callback of eventWithCallbacks.callbacks.values()) {
+        let callbacks = eventWithCallbacks.get(eventName);
+        for (let callback of callbacks.values()) {
             callback.call(this, parameters);
         }
     }
